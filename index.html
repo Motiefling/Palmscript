@@ -1,0 +1,400 @@
+<div id="app">
+<style>
+  #app {
+    --ink: #e8dcc4;
+    --ink-dim: #9d8f75;
+    --wood-dark: #2b211a;
+    --wood: #453425;
+    --wood-light: #5c4632;
+    --paper: #6b5946;
+    --brass: #c9a227;
+    --brass-dim: #8a7220;
+
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(120,90,60,.35), transparent 60%),
+      var(--wood-dark);
+    padding: 28px 22px 34px;
+    border-radius: 3px;
+    max-width: 860px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  #app * { box-sizing: border-box; }
+
+  .masthead {
+    border-bottom: 1px solid var(--wood-light);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--brass-dim);
+    margin: 0 0 6px;
+  }
+  .masthead h1 {
+    font-size: 30px;
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: .01em;
+  }
+  .masthead p {
+    margin: 8px 0 0;
+    color: var(--ink-dim);
+    font-size: 14px;
+    max-width: 56ch;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--brass-dim);
+    margin: 0 0 8px;
+  }
+
+  #ps-in {
+    width: 100%;
+    min-height: 84px;
+    resize: vertical;
+    background: var(--wood);
+    color: var(--ink);
+    border: 1px solid var(--wood-light);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  #ps-in:focus {
+    outline: 2px solid var(--brass);
+    outline-offset: 1px;
+  }
+  #ps-in::placeholder { color: #7d6c56; font-style: italic; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 26px;
+    align-items: flex-end;
+    margin: 18px 0 22px;
+  }
+  .ctrl { display: flex; flex-direction: column; }
+  .ctrl input[type="number"] {
+    width: 84px;
+    background: var(--wood);
+    color: var(--ink);
+    border: 1px solid var(--wood-light);
+    border-radius: 2px;
+    padding: 7px 9px;
+    font-family: inherit;
+    font-size: 15px;
+  }
+  .ctrl input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
+  .ctrl-note { font-size: 12px; color: var(--ink-dim); margin-top: 5px; }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    padding-bottom: 7px;
+  }
+  .toggle input { accent-color: var(--brass); width: 15px; height: 15px; }
+
+  /* The signature: the plate. Reads as an embossed page, not a code block. */
+  .plate-wrap { position: relative; }
+  #ps-out {
+    background: var(--paper);
+    background-image:
+      linear-gradient(rgba(255,255,255,.04), rgba(0,0,0,.10));
+    border: 1px solid #7b6853;
+    border-radius: 2px;
+    padding: 22px 20px;
+    min-height: 130px;
+    overflow-x: auto;
+    white-space: pre;
+    font-family: "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Consolas, monospace;
+    font-size: 17px;
+    line-height: 1.35;
+    color: #fdf6e6;
+    text-shadow: 0 1px 0 rgba(0,0,0,.45);
+    margin: 0;
+  }
+  #ps-out.empty {
+    color: #8d7a63;
+    font-style: italic;
+    font-family: inherit;
+    white-space: normal;
+    text-shadow: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: .06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid var(--brass-dim);
+    background: transparent;
+    color: var(--brass);
+    transition: background .12s, color .12s;
+  }
+  button:hover { background: var(--brass); color: var(--wood-dark); }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #ps-copy { border-color: var(--brass); }
+
+  .status { font-size: 13px; color: var(--ink-dim); min-height: 1em; }
+  .warn { color: #d9a066; }
+
+  .ref {
+    margin-top: 30px;
+    border-top: 1px solid var(--wood-light);
+    padding-top: 18px;
+  }
+  .ref summary {
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--brass-dim);
+    list-style: none;
+  }
+  .ref summary::-webkit-details-marker { display: none; }
+  .ref summary::before { content: "▸ "; }
+  .ref[open] summary::before { content: "▾ "; }
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 14px 8px;
+    margin-top: 16px;
+  }
+  .glyph { text-align: center; }
+  .glyph .ltr {
+    font-size: 12px;
+    color: var(--brass-dim);
+    letter-spacing: .1em;
+    margin-bottom: 4px;
+  }
+  .glyph pre {
+    margin: 0;
+    font-family: "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.3;
+    color: #f0e6d2;
+  }
+
+  @media (max-width: 560px) {
+    #app { padding: 20px 14px 26px; }
+    .masthead h1 { font-size: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #app * { transition: none !important; }
+  }
+</style>
+
+<div class="masthead">
+  <p class="eyebrow">Letters you can hold</p>
+  <h1>Palmscript Press</h1>
+  <p>Type in plain letters, get a message in Palmscript.</p>
+</div>
+
+<label class="field-label" for="ps-in">Words to press</label>
+<textarea id="ps-in" placeholder="Type message here."></textarea>
+
+<div class="controls">
+  <div class="ctrl">
+    <label class="field-label" for="ps-width">Letters per line</label>
+    <input id="ps-width" type="number" min="1" max="60" value="14">
+    <span class="ctrl-note">Match the letter window</span>
+  </div>
+  <label class="toggle">
+    <input id="ps-gap" type="checkbox" checked>
+    Space between letters
+  </label>
+  <label class="toggle">
+    <input id="ps-live" type="checkbox" checked>
+    Press as I type
+  </label>
+</div>
+
+<label class="field-label" for="ps-out">Pressed page</label>
+<div class="plate-wrap">
+  <pre id="ps-out" class="empty" aria-live="polite">Nothing pressed yet.</pre>
+</div>
+
+<div class="actions">
+  <button id="ps-go">Press</button>
+  <button id="ps-copy">Copy</button>
+  <button id="ps-clear">Clear</button>
+  <span class="status" id="ps-status"></span>
+</div>
+
+<details class="ref">
+  <summary>Alphabet reference</summary>
+  <div class="ref-grid" id="ps-ref"></div>
+</details>
+
+<script>
+(function () {
+  var A = {
+    A:['-·','··','··'], B:['•·','•·','··'], C:['••','··','··'],
+    D:['••','·•','··'], E:['•·','·•','··'], F:['-•','-·','··'],
+    G:['••','••','··'], H:['•·','••','··'], I:['·•','•·','··'],
+    J:['·•','••','··'], K:['-·','··','-·'], L:['•·','•·','•·'],
+    M:['••','··','•·'], N:['••','·•','•·'], O:['•·','·•','•·'],
+    P:['-•','-·','-·'], Q:['••','••','•·'], R:['•·','••','•·'],
+    S:['·•','•·','•·'], T:['·•','••','•·'], U:['-·','··','-•'],
+    V:['•·','•·','••'], W:['·•','••','·•'], X:['••','··','••'],
+    Y:['••','·•','••'], Z:['-·','·•','-•']
+  };
+  var BLANK = ['  ','  ','  '];
+
+  var $in = document.getElementById('ps-in');
+  var $out = document.getElementById('ps-out');
+  var $width = document.getElementById('ps-width');
+  var $gapBox = document.getElementById('ps-gap');
+  var $live = document.getElementById('ps-live');
+  var $status = document.getElementById('ps-status');
+
+  // Split into words, then greedily pack words into lines of <= width letters.
+  function layout(text, width) {
+    var lines = [];
+    text.split(/\r?\n/).forEach(function (para) {
+      var words = para.trim().split(/\s+/).filter(Boolean);
+      if (!words.length) { lines.push(''); return; }
+      var cur = '';
+      words.forEach(function (w) {
+        // A word longer than the line gets hard-broken.
+        while (w.length > width) {
+          if (cur) { lines.push(cur); cur = ''; }
+          lines.push(w.slice(0, width));
+          w = w.slice(width);
+        }
+        var trial = cur ? cur + ' ' + w : w;
+        if (trial.length <= width) { cur = trial; }
+        else { lines.push(cur); cur = w; }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function pressLine(line, gap) {
+    var cells = line.split('').map(function (ch) {
+      return A[ch.toUpperCase()] || BLANK;
+    });
+    var rows = [];
+    for (var r = 0; r < 3; r++) {
+      rows.push(cells.map(function (c) { return c[r]; }).join(gap).replace(/\s+$/, ''));
+    }
+    return rows.join('\n');
+  }
+
+  function press() {
+    var raw = $in.value;
+    var width = Math.max(1, Math.min(60, parseInt($width.value, 10) || 14));
+    var gap = $gapBox.checked ? ' ' : '';
+
+    if (!raw.trim()) {
+      $out.textContent = 'Nothing pressed yet.';
+      $out.classList.add('empty');
+      $status.textContent = '';
+      return;
+    }
+
+    var unknown = [];
+    raw.split('').forEach(function (ch) {
+      if (/\s/.test(ch)) return;
+      if (!A[ch.toUpperCase()] && unknown.indexOf(ch) === -1) unknown.push(ch);
+    });
+
+    var blocks = layout(raw, width).map(function (line) {
+      return line === '' ? '' : pressLine(line, gap);
+    });
+
+    $out.textContent = blocks.join('\n\n');
+    $out.classList.remove('empty');
+
+    if (unknown.length) {
+      $status.innerHTML = '<span class="warn">No glyph for ' +
+        unknown.map(function (c) { return '"' + c + '"'; }).join(', ') +
+        ' — left blank.</span>';
+    } else {
+      $status.textContent = '';
+    }
+  }
+
+  $in.addEventListener('input', function () { if ($live.checked) press(); });
+  $width.addEventListener('input', function () { if ($live.checked) press(); });
+  $gapBox.addEventListener('change', function () { if ($live.checked) press(); });
+  document.getElementById('ps-go').addEventListener('click', press);
+
+  document.getElementById('ps-clear').addEventListener('click', function () {
+    $in.value = '';
+    press();
+    $in.focus();
+  });
+
+  document.getElementById('ps-copy').addEventListener('click', function () {
+    if ($out.classList.contains('empty')) {
+      $status.textContent = 'Press something first.';
+      return;
+    }
+    var text = $out.textContent;
+    function done() {
+      $status.textContent = 'Copied.';
+      setTimeout(function () {
+        if ($status.textContent === 'Copied.') $status.textContent = '';
+      }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); }
+      catch (e) { $status.textContent = 'Copy failed — select the page and copy by hand.'; }
+      document.body.removeChild(ta);
+    }
+  });
+
+  // Alphabet reference
+  var ref = document.getElementById('ps-ref');
+  Object.keys(A).forEach(function (k) {
+    var d = document.createElement('div');
+    d.className = 'glyph';
+    var l = document.createElement('div');
+    l.className = 'ltr';
+    l.textContent = k;
+    var p = document.createElement('pre');
+    p.textContent = A[k].join('\n');
+    d.appendChild(l); d.appendChild(p);
+    ref.appendChild(d);
+  });
+})();
+</script>
+</div>
